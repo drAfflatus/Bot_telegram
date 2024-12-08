@@ -12,6 +12,22 @@ import dotenv
 import random
 import json
 
+"""
+Функция соединения
+"""
+
+
+def show_hint(*lines):
+    return '\n'.join(lines)
+
+
+"""
+Функция соединения пары слов: целевого и его перевода
+"""
+
+
+def show_target(data):
+    return f"{data['target_word']} -> {data['translate_word']}"
 
 
 def load_dotenv():
@@ -31,6 +47,7 @@ def read_from_json(file_path, cur, conn):
          """)
     res = cur.fetchone()
     if not (res):
+        print("------------- json loading----------------")
         print("Заполнение таблицы словаря...")
         with open(file_path, encoding='UTF-8') as f:
             json_data = json.load(f)
@@ -48,50 +65,50 @@ def read_from_json(file_path, cur, conn):
                 conn.commit()
 
 
-def drop_tables(cur, conn):
-    """Функция для удаления таблиц """
-
-    cur.execute("""
-                DROP TABLE  IF EXISTS LESSON CASCADE;
-                DROP TABLE  IF EXISTS MY_DICT CASCADE;
-                DROP TABLE  IF EXISTS WORD CASCADE;
-                DROP TABLE  IF EXISTS STUDENT CASCADE;
-                """)
-    conn.commit()
-
-
-def create_tables(cur, conn):
-    """Функция для создания таблиц в БД """
-    cur.execute("""
-                create table if not exists STUDENT(
-                ID_STUDENT BIGINT primary key
-                );
-
-                create table if not exists DICT(
-                ID_WORD INTEGER primary key,
-                ENGLISH VARCHAR(60) not null,
-                RUSSIAN VARCHAR(100) not null,
-                TRANSCRIPT VARCHAR(60)
-                );
-
-                create table if not exists LESSON(
-                ID_STUDENT BIGINT references STUDENT(ID_STUDENT),
-                ID_WORD INTEGER references DICT(ID_WORD),
-                LEVEL INTEGER not null,
-                DEL BOOLEAN not null
-                );
-
-                create table if not exists MY_DICT(
-                ID_STUDENT BIGINT references STUDENT(ID_STUDENT),
-                ID_WORD int generated always as identity (start 1000000) primary key,
-                ENGLISH VARCHAR(60) not null,
-                RUSSIAN VARCHAR(100) not null,
-                LEVEL INTEGER not null,
-                DEL BOOLEAN not null
-                );
-                """)
-
-    conn.commit()
+# def drop_tables(cur, conn):
+#     """Функция для удаления таблиц """
+#
+#     cur.execute("""
+#                 DROP TABLE  IF EXISTS LESSON CASCADE;
+#                 DROP TABLE  IF EXISTS MY_DICT CASCADE;
+#                 DROP TABLE  IF EXISTS WORD CASCADE;
+#                 DROP TABLE  IF EXISTS STUDENT CASCADE;
+#                 """)
+#     conn.commit()
+#
+#
+# def create_tables(cur, conn):
+#     """Функция для создания таблиц в БД """
+#     cur.execute("""
+#                 create table if not exists STUDENT(
+#                 ID_STUDENT BIGINT primary key
+#                 );
+#
+#                 create table if not exists DICT(
+#                 ID_WORD INTEGER primary key,
+#                 ENGLISH VARCHAR(60) not null,
+#                 RUSSIAN VARCHAR(100) not null,
+#                 TRANSCRIPT VARCHAR(60)
+#                 );
+#
+#                 create table if not exists LESSON(
+#                 ID_STUDENT BIGINT references STUDENT(ID_STUDENT),
+#                 ID_WORD INTEGER references DICT(ID_WORD),
+#                 LEVEL INTEGER not null,
+#                 DEL BOOLEAN not null
+#                 );
+#
+#                 create table if not exists MY_DICT(
+#                 ID_STUDENT BIGINT references STUDENT(ID_STUDENT),
+#                 ID_WORD int generated always as identity (start 1000000) primary key,
+#                 ENGLISH VARCHAR(60) not null,
+#                 RUSSIAN VARCHAR(100) not null,
+#                 LEVEL INTEGER not null,
+#                 DEL BOOLEAN not null
+#                 );
+#                 """)
+#
+#     conn.commit()
 
 
 def ghost_english_words(cur, conn):
@@ -210,6 +227,8 @@ def tuc_tuc_member(cur, conn, id_member):
         sql_templ = sql.SQL("INSERT INTO lesson (id_student,id_word,level,del) VALUES {t}".format(t=ins))
         cur.execute(sql_templ)
         conn.commit()
+        return True
+    return False
 
 
 def add_some_word_to_dict(cur, conn, id_member):

@@ -14,44 +14,18 @@ base_db = os.getenv("BASENAME")
 host_db = os.getenv("HOST")
 token_bot = os.getenv("TOKEN_BOT")
 
-conn = psycopg2.connect(
-    database=base_db,
-    user=user_db,
-    password=password_db,
-    host=host_db,
-    port=port_db
-)
-cur = conn.cursor()
+
 # ------------------------------------------
 # drop_tables(cur, conn)
-create_tables(cur, conn)
+# create_tables(cur, conn)
 # ------------------------------------------
 state_storage = StateMemoryStorage()
 
 bot = TeleBot(token_bot, state_storage=state_storage)
 
-read_from_json('words.json', cur, conn)
 
-known_users = []
-userStep = {}
-buttons = []
-
-"""
-Функция соединения
-"""
-
-
-def show_hint(*lines):
-    return '\n'.join(lines)
-
-
-"""
-Функция соединения пары слов: целевого и его перевода
-"""
-
-
-def show_target(data):
-    return f"{data['target_word']} -> {data['translate_word']}"
+# known_users = []
+# userStep = {}
 
 
 class Command:
@@ -65,25 +39,25 @@ class MyStates(StatesGroup):
     another_words = State()
 
 
-def get_user_step(uid):
-    if uid in userStep:
-        return userStep[uid]
-    else:
-        known_users.append(uid)
-        userStep[uid] = 0
-        print("New user detected, who hasn't used \"/start\" yet")
-        return 0
+# def get_user_step(uid):
+#     if uid in userStep:
+#         return userStep[uid]
+#     else:
+#         known_users.append(uid)
+#         userStep[uid] = 0
+#         print("New user detected, who hasn't used \"/start\" yet")
+#         return 0
 
 
 @bot.message_handler(commands=['cards', 'start', 'go'])
 def create_cards(message):
     cid = message.chat.id
     id_member = message.from_user.id
-    if cid not in known_users:
-        tuc_tuc_member(cur, conn, id_member)
+    # if cid not in known_users:
+    if tuc_tuc_member(cur, conn, id_member):  # туктук вернула .Т. пользователя нет в базе - здороваемся
 
-        known_users.append(cid)
-        userStep[cid] = 0
+        # known_users.append(cid)
+        # userStep[cid] = 0
         bot.send_message(cid, f"Привет, {message.from_user.first_name},"
                               f" давай учить английский ...\n"
                               f" Я знаю 8000 слов \n Ты можешь добавить"
@@ -205,9 +179,19 @@ def message_reply(message):
     if text == target_word:
         next_cards(message)
 
+buttons = []
 
+conn = psycopg2.connect(
+    database=base_db,
+    user=user_db,
+    password=password_db,
+    host=host_db,
+    port=port_db
+)
+cur = conn.cursor()
+
+read_from_json('words.json', cur, conn)
 bot.add_custom_filter(custom_filters.StateFilter(bot))
-
 bot.infinity_polling(skip_pending=True)
 
 cur.close()
